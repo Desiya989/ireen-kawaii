@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>มีของมาส่งงับ! 🎁</title>
+    <!-- Tailwind CSS สำหรับจัดสไตล์ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ฟอนต์ Mali น่ารักๆ จาก Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- คลังฟังก์ชันจุดพลุ Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Mali', cursive;
+            background: linear-gradient(135deg, #ffe4e1 0%, #ffb6c1 100%);
+            min-height: 100vh;
+            overflow: hidden; /* ป้องกันการสกรอลล์หน้าจอ */
+        }
+        
+        /* สไตล์สำหรับแต่ละหน้า */
+        .page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .page.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* กล่องของขวัญและแอนิเมชัน */
+        .gift-box {
+            font-size: 8rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+
+        .gift-box:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* แอนิเมชันเด้งขึ้นมา */
+        .pop-in {
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ปุ่มหนี */
+        #btn-no {
+            position: relative;
+            transition: all 0.2s ease-out;
+        }
+        
+        /* หัวใจลอย */
+        .floating-heart {
+            position: absolute;
+            font-size: 2rem;
+            animation: floatUp 3s forwards;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Page 1: หน้าส่งของ -->
+    <div id="page-1" class="page active">
+        <div class="bg-white/85 p-8 rounded-3xl shadow-xl border-4 border-pink-300 text-center max-w-md w-[90%] pop-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-pink-500 mb-6">มีของมาส่งงับ! 🚚💨</h1>
+            <p class="text-lg text-gray-600 mb-4">ลองแตะที่กล่องดูสิ</p>
+            <div id="gift-1" class="gift-box mb-4">🎁</div>
+        </div>
+    </div>
+
+    <!-- Page 2: หน้าขอเป็นคนคุย -->
+    <div id="page-2" class="page">
+        <div class="bg-white/90 p-8 rounded-3xl shadow-2xl border-4 border-pink-400 text-center max-w-lg w-[90%] relative overflow-hidden">
+            <div class="text-5xl mb-4">🌸🌷🌺</div>
+            <h1 class="text-3xl md:text-4xl font-bold text-pink-600 mb-6 drop-shadow-sm">มาเป็นคนคุยกันไหม? 🥺</h1>
+            
+            <!-- ข้อความแจ้งเตือนเมื่อกดปุ่มไม่เป็น -->
+            <p id="rejection-msg" class="text-xl text-red-500 font-semibold h-8 mb-4 transition-opacity duration-300"></p>
+
+            <div id="button-container" class="flex justify-center gap-4 mt-8 relative h-16 w-full">
+                <button id="btn-yes" onclick="acceptOffer()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-110 active:scale-95 text-xl">
+                    ตกลง 🥰
+                </button>
+                <button id="btn-no" onclick="rejectOffer()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-8 rounded-full shadow-lg text-xl">
+                    ไม่เป็น
+                </button>
+            </div>
+
+            <!-- ฟอร์มลงชื่อ (ซ่อนไว้ตอนแรก) -->
+            <div id="signature-form" class="hidden mt-6 flex-col items-center gap-4 pop-in">
+                <p class="text-lg text-pink-600 font-semibold">น่ารักที่สุดเลย! ลงชื่อไว้หน่อยน้า 📝</p>
+                <input type="text" id="crush-name" placeholder="พิมพ์ชื่อตัวเองตรงนี้เยย..." class="w-full text-center p-3 border-2 border-pink-300 rounded-full focus:outline-none focus:border-pink-500 text-lg">
+                <button onclick="submitName()" class="bg-green-400 hover:bg-green-500 text-white font-bold py-2 px-8 rounded-full shadow-lg text-lg transform transition hover:scale-105">
+                    ยืนยัน 💖
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 3: หน้าท้าย -->
+    <div id="page-3" class="page">
+        <div class="bg-white/90 p-8 rounded-3xl shadow-xl border-4 border-pink-400 text-center max-w-md w-[90%] pop-in">
+            <h1 class="text-3xl font-bold text-pink-500 mb-4">มีของขวัญอีกกล่อง! 🎉</h1>
+            <div id="gift-2" class="gift-box mb-6">🎁</div>
+            
+            <!-- ข้อความสุดท้าย (ซ่อนไว้จนกว่าจะกดกล่อง) -->
+            <div id="final-message-box" class="hidden pop-in mt-4 bg-pink-50 p-6 rounded-2xl border-2 border-pink-300 flex flex-col items-center">
+                <!-- ช่อดอกไม้และชื่อ -->
+                <div class="text-6xl mb-3">💐🌷✨</div>
+                <h2 id="final-to-name" class="text-2xl font-bold text-pink-600 mb-4"></h2>
+                
+                <p id="final-text" class="text-lg md:text-xl text-gray-700 leading-relaxed font-semibold">
+                    มาถึงหน้าสุดท้ายแล้วบอกเค้าหน่อยแล้วเค้าจะส่งรูปให้ให้อ้วนปายรอในไลน์เยยน้าา
+                </p>
+                <div class="text-4xl mt-4">💖🧸💕</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ระบบสลับหน้า ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            setTimeout(() => {
+                document.getElementById(pageId).classList.add('active');
+            }, 100);
+        }
+
+        // --- ฟังก์ชันจุดพลุ (Confetti) ---
+        function fireConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 6,
+                    angle: 60,
+                    spread: 60,
+                    origin: { x: 0 },
+                    colors: ['#ffb6c1', '#ffc0cb', '#ff69b4', '#ff1493', '#ffffff']
+                });
+                confetti({
+                    particleCount: 6,
+                    angle: 120,
+                    spread: 60,
+                    origin: { x: 1 },
+                    colors: ['#ffb6c1', '#ffc0cb', '#ff69b4', '#ff1493', '#ffffff']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        // --- การทำงาน Page 1 ---
+        const gift1 = document.getElementById('gift-1');
+        gift1.addEventListener('click', function() {
+            this.classList.add('shake');
+            fireConfetti();
+            
+            setTimeout(() => {
+                this.innerHTML = "📦✨";
+            }, 500);
+
+            // ไปหน้า 2 หลังผ่านไป 2 วินาที
+            setTimeout(() => {
+                showPage('page-2');
+            }, 2000);
+        });
+
+        // --- การทำงาน Page 2 ---
+        let noClickCount = 0;
+        const btnNo = document.getElementById('btn-no');
+        const msgBox = document.getElementById('rejection-msg');
+        
+        function rejectOffer() {
+            noClickCount++;
+            
+            if (noClickCount === 1) {
+                msgBox.innerText = "อย่าปฎิเสธเยยน้า 🥺";
+                moveButton();
+            } else if (noClickCount === 2) {
+                msgBox.innerText = "เค้าชอบอ้วนมากๆเยยน้า 😭";
+                moveButton();
+            } else if (noClickCount === 3) {
+                msgBox.innerText = "บังคับห้ามปฎิเสธ! 😤";
+                moveButton();
+            } else if (noClickCount >= 4) {
+                // บล็อคการกด และลบปุ่มออก
+                msgBox.innerText = "บล็อคการกดแล้ว! 🚫";
+                msgBox.classList.remove('text-red-500');
+                msgBox.classList.add('text-gray-500');
+                btnNo.style.display = 'none';
+            }
+        }
+
+        function moveButton() {
+            btnNo.style.position = 'absolute';
+            
+            const container = document.getElementById('button-container');
+            const maxX = container.offsetWidth - btnNo.offsetWidth;
+            const maxY = 150;
+            
+            const randomX = Math.floor(Math.random() * (maxX > 0 ? maxX : 200)) - 100;
+            const randomY = Math.floor(Math.random() * maxY) - 100;
+
+            btnNo.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        }
+
+        function acceptOffer() {
+            document.getElementById('button-container').classList.add('hidden');
+            msgBox.classList.add('hidden');
+            document.getElementById('signature-form').classList.remove('hidden');
+            document.getElementById('signature-form').classList.add('flex');
+            
+            // สร้างเอฟเฟกต์หัวใจลอย
+            for(let i=0; i<6; i++) {
+                setTimeout(createHeart, i * 200);
+            }
+        }
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.classList.add('floating-heart');
+            heart.style.left = (Math.random() * 80 + 10) + '%';
+            heart.style.bottom = '20%';
+            document.getElementById('page-2').appendChild(heart);
+            setTimeout(() => heart.remove(), 3000);
+        }
+
+        let savedName = "";
+        function submitName() {
+            const nameInput = document.getElementById('crush-name').value.trim();
+            if (nameInput === "") {
+                const inputEl = document.getElementById('crush-name');
+                inputEl.placeholder = "ใส่ชื่อก่อนน้าาา พลีสส 🥺";
+                inputEl.classList.add('border-red-400');
+                setTimeout(() => inputEl.classList.remove('border-red-400'), 1000);
+                return;
+            }
+            savedName = nameInput;
+            showPage('page-3');
+        }
+
+        // --- การทำงาน Page 3 ---
+        const gift2 = document.getElementById('gift-2');
+        gift2.addEventListener('click', function() {
+            this.classList.add('shake');
+            fireConfetti();
+            
+            setTimeout(() => {
+                this.classList.add('hidden');
+                
+                const finalMsgBox = document.getElementById('final-message-box');
+                const finalToName = document.getElementById('final-to-name');
+                
+                // แสดงชื่อผู้ลงชื่อ
+                finalToName.innerText = `คิมให้ ${savedName} 💕💕💕 >\\\\<`;
+                finalMsgBox.classList.remove('hidden');
+                
+                // จุดพลุฉลองเพิ่มเติม
+                setTimeout(fireConfetti, 400);
+            }, 500);
+        });
+
+    </script>
+</body>
+</html>
